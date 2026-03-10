@@ -1,13 +1,14 @@
 <template>
   <div id="wildev-app">
-    <ToastProvider ref="toastRef">
-      <AppLoader v-if="loading" message="Memuat WilDev Finance..." />
-      <router-view v-else v-slot="{ Component }">
+    <AppLoader v-if="appLoading" message="Memuat WilDev Finance..." />
+    <template v-else>
+      <router-view v-slot="{ Component }">
         <Transition name="page" mode="out-in">
           <component :is="Component" />
         </Transition>
       </router-view>
-    </ToastProvider>
+    </template>
+    <ToastProvider ref="toastRef" />
   </div>
 </template>
 
@@ -18,13 +19,19 @@ import ToastProvider from '@/components/common/ToastProvider.vue'
 import AppLoader from '@/components/common/AppLoader.vue'
 
 const authStore = useAuthStore()
-const loading = ref(true)
+const appLoading = ref(true)
 const toastRef = ref(null)
 
 provide('toast', { show: (...args) => toastRef.value?.show(...args) })
 
 onMounted(async () => {
-  await authStore.init()
-  loading.value = false
+  try {
+    await authStore.init()
+  } catch (e) {
+    console.error('App init error:', e)
+  } finally {
+    appLoading.value = false
+    console.log('App loaded, appLoading =', appLoading.value)
+  }
 })
 </script>

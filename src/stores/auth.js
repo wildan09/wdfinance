@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { supabase } from '@/lib/supabase'
+import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref(null)
@@ -13,20 +13,30 @@ export const useAuthStore = defineStore('auth', () => {
   async function init() {
     loading.value = true
     try {
+      if (!isSupabaseConfigured) {
+        console.warn('Supabase belum dikonfigurasi. Silakan isi .env dengan kredensial Supabase.')
+        return
+      }
       const { data: { session } } = await supabase.auth.getSession()
       if (session) {
         user.value = session.user
         await fetchProfile()
       }
+    } catch (e) {
+      console.error('Auth init error:', e)
     } finally {
       loading.value = false
     }
 
-    supabase.auth.onAuthStateChange((event, session) => {
-      user.value = session?.user || null
-      if (session?.user) fetchProfile()
-      else profile.value = null
-    })
+    try {
+      supabase.auth.onAuthStateChange((event, session) => {
+        user.value = session?.user || null
+        if (session?.user) fetchProfile()
+        else profile.value = null
+      })
+    } catch (e) {
+      // ignore auth listener errors when not configured
+    }
   }
 
   async function login(username, password) {

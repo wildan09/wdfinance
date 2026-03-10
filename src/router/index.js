@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { supabase } from '@/lib/supabase'
+import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 
 const routes = [
   {
@@ -61,14 +61,26 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to, from, next) => {
-  const { data: { session } } = await supabase.auth.getSession()
+  if (!isSupabaseConfigured) {
+    // If Supabase isn't configured, allow login page, redirect everything else to login
+    if (to.meta.requiresAuth) next('/login')
+    else next()
+    return
+  }
 
-  if (to.meta.requiresAuth && !session) {
-    next('/login')
-  } else if (to.path === '/login' && session) {
-    next('/')
-  } else {
-    next()
+  try {
+    const { data: { session } } = await supabase.auth.getSession()
+
+    if (to.meta.requiresAuth && !session) {
+      next('/login')
+    } else if (to.path === '/login' && session) {
+      next('/')
+    } else {
+      next()
+    }
+  } catch (e) {
+    if (to.meta.requiresAuth) next('/login')
+    else next()
   }
 })
 
