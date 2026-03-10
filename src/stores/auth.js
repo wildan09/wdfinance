@@ -41,13 +41,16 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function login(username, password) {
     const EMAIL_MAP = {
-      'wildan&deva': 'wildandeva@wildevfinance.app'
+      'wildandeva': 'wildandeva@finance.app',
+      'wildan&deva': 'wildandeva@finance.app',
+      'wildan': 'wildandeva@finance.app',
+      'admin': 'wildandeva@finance.app'
     }
     const email = EMAIL_MAP[username.toLowerCase().trim()]
-    if (!email) throw new Error('Username tidak ditemukan')
+    if (!email) throw new Error('Username tidak ditemukan. Gunakan: wildandeva')
 
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) throw new Error('Username atau password salah')
+    if (error) throw new Error('Password salah. Silakan coba lagi.')
     user.value = data.user
     await fetchProfile()
     return data

@@ -21,10 +21,11 @@
           <input
             v-model="username"
             type="text"
-            placeholder="wildan&deva"
+            placeholder="wildandeva"
             autocomplete="username"
             class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-text placeholder-muted/50 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all"
           />
+          <p class="text-xs text-muted/50 mt-1.5 pl-1">Gunakan: <span class="text-primary/70">wildandeva</span></p>
         </div>
 
         <div>

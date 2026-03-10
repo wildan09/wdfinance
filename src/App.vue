@@ -9,6 +9,7 @@
       </router-view>
     </template>
     <ToastProvider ref="toastRef" />
+    <PwaInstallPrompt />
   </div>
 </template>
 
@@ -17,6 +18,7 @@ import { ref, onMounted, provide } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import ToastProvider from '@/components/common/ToastProvider.vue'
 import AppLoader from '@/components/common/AppLoader.vue'
+import PwaInstallPrompt from '@/components/common/PwaInstallPrompt.vue'
 
 const authStore = useAuthStore()
 const appLoading = ref(true)
