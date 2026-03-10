@@ -14,7 +14,7 @@ export const useSavingsStore = defineStore('savings', () => {
     try {
       const { data, error } = await supabase
         .from('savings_goals')
-        .select('*, wallet:wallets(*)')
+        .select('*, wallet:wallets!wallet_id(*)')
         .order('created_at', { ascending: false })
       if (error) throw error
       goals.value = data || []
@@ -28,7 +28,7 @@ export const useSavingsStore = defineStore('savings', () => {
     const { data, error } = await supabase
       .from('savings_goals')
       .insert({ ...goal, user_id: user.id })
-      .select('*, wallet:wallets(*)')
+      .select('*, wallet:wallets!wallet_id(*)')
       .single()
     if (error) throw error
     goals.value.unshift(data)
@@ -40,7 +40,7 @@ export const useSavingsStore = defineStore('savings', () => {
       .from('savings_goals')
       .update(updates)
       .eq('id', id)
-      .select('*, wallet:wallets(*)')
+      .select('*, wallet:wallets!wallet_id(*)')
       .single()
     if (error) throw error
     const idx = goals.value.findIndex(g => g.id === id)

@@ -15,7 +15,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
     try {
       let query = supabase
         .from('transactions')
-        .select('*, category:categories(*), wallet:wallets(*), to_wallet:wallets!transactions_to_wallet_id_fkey(*)')
+        .select('*, category:categories(*), wallet:wallets!wallet_id(*), to_wallet:wallets!transactions_to_wallet_id_fkey(*)')
         .order('date', { ascending: false })
         .order('created_at', { ascending: false })
         .range(offset, offset + pageSize - 1)
@@ -48,7 +48,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
     const { data, error } = await supabase
       .from('transactions')
       .insert(payload)
-      .select('*, category:categories(*), wallet:wallets(*)')
+      .select('*, category:categories(*), wallet:wallets!wallet_id(*)')
       .single()
     if (error) throw error
 
@@ -73,7 +73,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
       .from('transactions')
       .update({ ...updates, updated_at: new Date().toISOString() })
       .eq('id', id)
-      .select('*, category:categories(*), wallet:wallets(*)')
+      .select('*, category:categories(*), wallet:wallets!wallet_id(*)')
       .single()
     if (error) throw error
 
