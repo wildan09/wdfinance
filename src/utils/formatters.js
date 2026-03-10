@@ -85,3 +85,40 @@ export const walletTypeLabels = {
 export function getWalletTypeLabel(type) {
   return walletTypeLabels[type] || type
 }
+/**
+ * Format number with thousand separator (Indonesian)
+ * @param {number} value
+ * @returns {string}
+ */
+export function formatNumber(value) {
+  if (!value && value !== 0) return ''
+  return new Intl.NumberFormat('id-ID').format(value)
+}
+
+/**
+ * Format currency to IDR
+ * @param {number} value
+ * @returns {string}
+ */
+export function formatCurrency(value) {
+  if (!value && value !== 0) return 'Rp 0'
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    minimumFractionDigits: 0
+  }).format(value)
+}
+
+/**
+ * Format date to Indonesian locale
+ * @param {string|Date} date
+ * @returns {string}
+ */
+export function formatDate(date) {
+  if (!date) return ''
+  return new Intl.DateTimeFormat('id-ID', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  }).format(new Date(date))
+}
