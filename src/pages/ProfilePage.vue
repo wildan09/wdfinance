@@ -3,12 +3,36 @@
     <div class="px-5 pt-6 pb-4 space-y-5" :style="{paddingTop:'calc(1.5rem + env(safe-area-inset-top,0px))'}">
       <!-- Avatar & Name -->
       <div class="flex flex-col items-center gap-3">
-        <div class="w-20 h-20 rounded-full bg-gradient-to-br from-primary/40 to-primary-dark/40 flex items-center justify-center text-2xl font-display font-bold border-2 border-primary/20">
-          W&D
-        </div>
+        <label 
+          class="relative w-24 h-24 rounded-full flex items-center justify-center text-3xl font-display font-bold border-4 border-primary/20 cursor-pointer overflow-hidden group hover:border-primary/50 transition-colors shadow-xl"
+          :class="{'opacity-50 pointer-events-none': uploadingAvatar}"
+        >
+          <!-- Hidden File Input -->
+          <input type="file" accept="image/*" class="hidden" @change="handleFileUpload" :disabled="uploadingAvatar" />
+
+          <!-- Avatar Image -->
+          <img v-if="avatarUrl" :src="avatarUrl" alt="Profile" class="w-full h-full object-cover" />
+          
+          <!-- Initials Fallback -->
+          <div v-else class="w-full h-full bg-gradient-to-br from-primary/40 to-primary-dark/40 flex items-center justify-center text-primary-dark">
+            {{ getInitials(displayName) }}
+          </div>
+
+          <!-- Loading Overlay -->
+          <div v-if="uploadingAvatar" class="absolute inset-0 bg-bg/60 flex items-center justify-center backdrop-blur-sm">
+            <span class="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></span>
+          </div>
+
+          <!-- Hover Overlay -->
+          <div v-if="!uploadingAvatar" class="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+            <span class="text-xl">📷</span>
+            <span class="text-[10px] font-medium text-white mt-1">Ubah Foto</span>
+          </div>
+        </label>
+        
         <div class="text-center">
           <h2 class="text-lg font-display font-bold">{{ displayName }}</h2>
-          <p class="text-xs text-muted">wildandeva@wildevfinance.app</p>
+          <p class="text-xs text-muted">{{ userEmail }}</p>
         </div>
       </div>
 
@@ -67,7 +91,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import AppShell from '@/components/layout/AppShell.vue'
 import { useAuthStore } from '@/stores/auth'
@@ -84,7 +108,47 @@ const { settings, fetchSettings, updateSettings } = useNotifications()
 const { exportExcel } = useExport()
 
 const displayName = computed(() => authStore.displayName)
+const avatarUrl = computed(() => authStore.avatarUrl)
+const userEmail = computed(() => authStore.user?.email || 'user@example.com')
 const notifSettings = ref({ budget_alert: true, daily_reminder: false, goal_alert: true })
+
+const toast = inject('toast')
+const uploadingAvatar = ref(false)
+
+function getInitials(name) {
+  if (!name) return 'W&D'
+  const words = name.split(' ')
+  if (words.length >= 2) return (words[0][0] + words[1][0]).toUpperCase()
+  return name.substring(0, 2).toUpperCase()
+}
+
+async function handleFileUpload(event) {
+  const file = event.target.files[0]
+  if (!file) return
+
+  // Basic validation
+  if (!file.type.startsWith('image/')) {
+    toast.show({ title: 'Gagal', message: 'File harus berupa gambar.', type: 'error' })
+    return
+  }
+  if (file.size > 2 * 1024 * 1024) {
+    toast.show({ title: 'Gagal', message: 'Ukuran maksimal foto adalah 2MB.', type: 'error' })
+    return
+  }
+
+  uploadingAvatar.value = true
+  try {
+    const url = await authStore.uploadAvatar(file)
+    toast.show({ title: 'Berhasil', message: 'Foto profil berhasil diperbarui.', type: 'success' })
+  } catch (e) {
+    console.error('Error uploading avatar:', e)
+    toast.show({ title: 'Gagal', message: e.message || 'Gagal mengunggah foto profil.', type: 'error' })
+  } finally {
+    uploadingAvatar.value = false
+    // reset input value so same file can be selected again
+    event.target.value = ''
+  }
+}
 
 async function saveNotif() {
   try { await updateSettings(notifSettings.value) } catch(e) { console.error(e) }

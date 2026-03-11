@@ -9,6 +9,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isAuthenticated = computed(() => !!user.value)
   const displayName = computed(() => profile.value?.full_name || 'Wildan & Deva')
+  const avatarUrl = computed(() => profile.value?.avatar_url || null)
 
   async function init() {
     loading.value = true
@@ -84,8 +85,28 @@ export const useAuthStore = defineStore('auth', () => {
     profile.value = null
   }
 
+  async function uploadAvatar(file) {
+    if (!user.value) throw new Error('User not authenticated')
+
+    const fileExt = file.name.split('.').pop()
+    const filePath = `${user.value.id}-${Math.random()}.${fileExt}`
+
+    let { error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(filePath, file)
+
+    if (uploadError) throw new Error('Gagal mengunggah foto profil.')
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('avatars')
+      .getPublicUrl(filePath)
+
+    await updateProfile({ avatar_url: publicUrl })
+    return publicUrl
+  }
+
   return {
-    user, profile, loading, isAuthenticated, displayName,
-    init, login, fetchProfile, updateProfile, logout
+    user, profile, loading, isAuthenticated, displayName, avatarUrl,
+    init, login, fetchProfile, updateProfile, uploadAvatar, logout
   }
 })
