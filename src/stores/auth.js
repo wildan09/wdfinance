@@ -42,9 +42,8 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function login(username, password) {
     const EMAIL_MAP = {
-      'wildandeva': 'wildandeva@finance.app',
       'wildan&deva': 'wildandeva@finance.app',
-      'wildan': 'wildandeva@finance.app',
+      'vicki' : 'wildandeva@finance.app',
       'admin': 'wildandeva@finance.app'
     }
     const email = EMAIL_MAP[username.toLowerCase().trim()]
