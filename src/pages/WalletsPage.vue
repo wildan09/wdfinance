@@ -46,7 +46,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, inject } from 'vue'
 import AppShell from '@/components/layout/AppShell.vue'
 import TopBar from '@/components/layout/TopBar.vue'
 import BottomSheet from '@/components/common/BottomSheet.vue'
@@ -58,6 +58,7 @@ import { formatCurrency } from '@/utils/currency'
 import { getWalletTypeLabel } from '@/utils/formatters'
 
 const ws = useWalletsStore()
+const toast = inject('toast')
 const wallets = computed(() => ws.wallets)
 const totalBalance = computed(() => ws.totalBalance)
 const loading = computed(() => ws.loading)
@@ -70,6 +71,16 @@ const wf = ref(defWf())
 function openDetail(w){dw.value=w;showDetail.value=true}
 function startEdit(){editW.value=dw.value;wf.value={name:dw.value.name,type:dw.value.type,balance:Number(dw.value.balance),icon:dw.value.icon,color:dw.value.color};showDetail.value=false;showForm.value=true}
 async function saveWallet(){try{if(editW.value)await ws.updateWallet(editW.value.id,wf.value);else await ws.addWallet(wf.value);showForm.value=false;editW.value=null;wf.value=defWf()}catch(e){console.error(e)}}
-async function delWallet(){if(!dw.value||!confirm('Hapus wallet ini?'))return;try{await ws.deleteWallet(dw.value.id);showDetail.value=false}catch(e){console.error(e)}}
+async function delWallet(){
+  if(!dw.value||!confirm('Hapus wallet ini? Hati-hati, jika ada transaksi terkait, wallet tidak bisa dihapus.'))return;
+  try {
+    await ws.deleteWallet(dw.value.id);
+    showDetail.value=false;
+    toast.show({ title: 'Berhasil', message: 'Wallet terhapus.', type: 'success' })
+  } catch(e) {
+    console.error(e);
+    toast.show({ title: 'Gagal', message: 'Wallet tidak bisa dihapus karena masih digunakan di riwayat transaksi.', type: 'error' })
+  }
+}
 onMounted(()=>ws.fetchWallets())
 </script>

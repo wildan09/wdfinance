@@ -39,7 +39,7 @@
     </button>
 
     <!-- Goal Form -->
-    <GoalForm v-model="showForm" :wallets="walletsList" @submit="handleAddGoal" />
+    <GoalForm v-model="showForm" :wallets="walletsList" :editData="editGoal" @submit="handleAddGoal" />
 
     <!-- Detail & Add Funds -->
     <BottomSheet v-model="showDetail" title="Detail Target">
@@ -60,9 +60,15 @@
           </button>
         </div>
 
-        <button @click="handleDelete" class="w-full py-3 rounded-xl bg-expense/10 text-expense text-sm font-medium hover:bg-expense/20 transition-colors">
-          🗑️ Hapus Target
-        </button>
+        <!-- Actions -->
+        <div class="flex gap-3">
+          <button @click="handleEdit" class="flex-1 py-3 rounded-xl glass text-sm font-medium hover:bg-white/10 transition-colors">
+            ✏️ Edit Target
+          </button>
+          <button @click="handleDelete" class="flex-1 py-3 rounded-xl bg-expense/10 text-expense text-sm font-medium hover:bg-expense/20 transition-colors">
+            🗑️ Hapus
+          </button>
+        </div>
       </div>
     </BottomSheet>
 
@@ -83,7 +89,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, inject } from 'vue'
 import AppShell from '@/components/layout/AppShell.vue'
 import TopBar from '@/components/layout/TopBar.vue'
 import SkeletonCard from '@/components/common/SkeletonCard.vue'
@@ -101,13 +107,16 @@ import { formatCurrency } from '@/utils/currency'
 const savingsStore = useSavingsStore()
 const walletsStore = useWalletsStore()
 const { sendGoalComplete } = useNotifications()
+const toast = inject('toast')
 
 const loading = ref(false)
 const showForm = ref(false)
 const showDetail = ref(false)
 const showConfetti = ref(false)
 const selectedGoal = ref(null)
+const editGoal = ref(null)
 const addFundAmount = ref(0)
+
 
 const activeGoals = ref([])
 const completedGoals = ref([])
@@ -130,12 +139,27 @@ function openDetail(goal) {
   showDetail.value = true
 }
 
+function handleEdit() {
+  editGoal.value = selectedGoal.value
+  showDetail.value = false
+  showForm.value = true
+}
+
 async function handleAddGoal(data) {
   try {
-    await savingsStore.addGoal(data)
+    if (editGoal.value) {
+      await savingsStore.updateGoal(editGoal.value.id, data)
+      toast.show({ title: 'Berhasil', message: 'Target berhasil diperbarui.', type: 'success' })
+    } else {
+      await savingsStore.addGoal(data)
+      toast.show({ title: 'Berhasil', message: 'Target baru berhasil ditambahkan.', type: 'success' })
+    }
+    showForm.value = false
+    editGoal.value = null
     await loadData()
   } catch (err) {
     console.error(err)
+    toast.show({ title: 'Gagal', message: 'Terjadi kesalahan saat menyimpan target.', type: 'error' })
   }
 }
 
@@ -157,13 +181,15 @@ async function handleAddFunds() {
 
 async function handleDelete() {
   if (!selectedGoal.value) return
-  if (!confirm('Hapus target ini?')) return
+  if (!confirm('Hapus target ini secara permanen?')) return
   try {
     await savingsStore.deleteGoal(selectedGoal.value.id)
     showDetail.value = false
+    toast.show({ title: 'Berhasil', message: 'Target dihapus.', type: 'success' })
     await loadData()
   } catch (err) {
     console.error(err)
+    toast.show({ title: 'Gagal', message: err.message || 'Gagal menghapus target.', type: 'error' })
   }
 }
 

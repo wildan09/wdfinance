@@ -17,10 +17,33 @@ export function useCategories() {
 
       const { data, error } = await query
       if (error) throw error
-      categories.value = data || []
+      
+      if (data.length === 0 && !type) {
+        await seedDefaultCategories()
+        const { data: newData } = await supabase.from('categories').select('*').order('sort_order', { ascending: true })
+        categories.value = newData || []
+      } else {
+        categories.value = data || []
+      }
     } finally {
       loading.value = false
     }
+  }
+
+  async function seedDefaultCategories() {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    const defaultCategories = [
+      { user_id: user.id, name: 'Gaji', type: 'income', icon: '💰', color: '#10B981', sort_order: 1 },
+      { user_id: user.id, name: 'Bonus', type: 'income', icon: '🎁', color: '#3B82F6', sort_order: 2 },
+      { user_id: user.id, name: 'Investasi', type: 'income', icon: '📈', color: '#8B5CF6', sort_order: 3 },
+      { user_id: user.id, name: 'Makanan', type: 'expense', icon: '🍔', color: '#EF4444', sort_order: 4 },
+      { user_id: user.id, name: 'Transportasi', type: 'expense', icon: '🚗', color: '#F59E0B', sort_order: 5 },
+      { user_id: user.id, name: 'Belanja', type: 'expense', icon: '🛒', color: '#EC4899', sort_order: 6 },
+      { user_id: user.id, name: 'Hiburan', type: 'expense', icon: '🎮', color: '#6366F1', sort_order: 7 },
+      { user_id: user.id, name: 'Tagihan', type: 'expense', icon: '🧾', color: '#14B8A6', sort_order: 8 }
+    ]
+    await supabase.from('categories').insert(defaultCategories)
   }
 
   async function addCategory(cat) {
